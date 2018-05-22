@@ -14,14 +14,37 @@ angular.module('btford.socket-io', []).
     var defaultPrefix = 'socket:',
       ioSocket;
 
+    var aggregatedCallbacks = [],
+        aggregatedTimeout = null;
+
     // expose to provider
     this.$get = ['$rootScope', function ($rootScope) {
 
-      var asyncAngularify = function (socket, callback) {
+      var aggregateCallback = function (callback, aggregateDelay) {
+        aggregatedCallbacks.push(callback);
+
+        // Schedule timeout?
+        if (aggregatedTimeout === null) {
+          aggregatedTimeout = setTimeout(function() {
+            // Trigger all delayed callbacks
+            var delayedCallback;
+
+            while (delayedCallback = aggregatedCallback.pop()) {
+              delayedCallback();
+            }
+
+            aggregatedTimeout = null;
+          }, (aggregateDelay || 10));
+        }
+      };
+
+      var asyncAngularify = function (socket, callback, aggregateDelay) {
         return callback ? function () {
           var args = arguments;
 
-          callback.apply(socket, args);
+          aggregateCallback(function () {
+            callback.apply(socket, args);
+          }, aggregateDelay);
         } : angular.noop;
       };
 
@@ -32,11 +55,11 @@ angular.module('btford.socket-io', []).
         var defaultScope = options.scope || $rootScope;
 
         var addListener = function (eventName, callback) {
-          socket.on(eventName, asyncAngularify(socket, callback));
+          socket.on(eventName, asyncAngularify(socket, callback, 1000));
         };
 
         var addOnceListener = function (eventName, callback) {
-          socket.once(eventName, asyncAngularify(socket, callback));
+          socket.once(eventName, asyncAngularify(socket, callback, 1000));
         };
 
         var wrappedSocket = {
