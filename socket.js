@@ -29,7 +29,7 @@ angular.module('btford.socket-io', []).
             // Trigger all delayed callbacks
             var delayedCallback;
 
-            while (delayedCallback = aggregatedCallback.pop()) {
+            while (delayedCallback = aggregatedCallback.shift()) {
               delayedCallback();
             }
 
