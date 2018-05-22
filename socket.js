@@ -15,14 +15,13 @@ angular.module('btford.socket-io', []).
       ioSocket;
 
     // expose to provider
-    this.$get = ['$rootScope', '$timeout', function ($rootScope, $timeout) {
+    this.$get = ['$rootScope', function ($rootScope) {
 
       var asyncAngularify = function (socket, callback) {
         return callback ? function () {
           var args = arguments;
-          $timeout(function () {
-            callback.apply(socket, args);
-          }, 0);
+
+          callback.apply(socket, args);
         } : angular.noop;
       };
 
