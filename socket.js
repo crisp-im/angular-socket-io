@@ -18,7 +18,7 @@ angular.module('btford.socket-io', []).
         aggregatedTimeout = null;
 
     // expose to provider
-    this.$get = ['$rootScope', '$timeout', function ($rootScope) {
+    this.$get = ['$rootScope', '$timeout', function ($rootScope, $timeout) {
 
       var aggregateCallback = function (callback, aggregateDelay) {
         aggregatedCallbacks.push(callback);
