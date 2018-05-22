@@ -15,14 +15,13 @@ angular.module('btford.socket-io', []).
       ioSocket;
 
     // expose to provider
-    this.$get = ['$rootScope', '$timeout', function ($rootScope, $timeout) {
+    this.$get = ['$rootScope', function ($rootScope) {
 
       var asyncAngularify = function (socket, callback) {
         return callback ? function () {
           var args = arguments;
-          $timeout(function () {
-            callback.apply(socket, args);
-          }, 0);
+
+          callback.apply(socket, args);
         } : angular.noop;
       };
 
@@ -33,11 +32,11 @@ angular.module('btford.socket-io', []).
         var defaultScope = options.scope || $rootScope;
 
         var addListener = function (eventName, callback) {
-          socket.on(eventName, callback.__ng = asyncAngularify(socket, callback));
+          socket.on(eventName, asyncAngularify(socket, callback));
         };
 
         var addOnceListener = function (eventName, callback) {
-          socket.once(eventName, callback.__ng = asyncAngularify(socket, callback));
+          socket.once(eventName, asyncAngularify(socket, callback));
         };
 
         var wrappedSocket = {
