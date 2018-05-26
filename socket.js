@@ -38,13 +38,21 @@ angular.module('btford.socket-io', []).
         }
       };
 
-      var asyncAngularify = function (socket, callback, aggregateDelay) {
+      var asyncAngularifyReceive = function (socket, callback) {
         return callback ? function () {
           var args = arguments;
-
           aggregateCallback(function () {
             callback.apply(socket, args);
-          }, aggregateDelay);
+          }, 1000);
+        } : angular.noop;
+      };
+
+      var asyncAngularifySend = function (socket, callback) {
+        return callback ? function () {
+          var args = arguments;
+          setTimeout(function () {
+            callback.apply(socket, args);
+          }, 0);
         } : angular.noop;
       };
 
@@ -55,11 +63,11 @@ angular.module('btford.socket-io', []).
         var defaultScope = options.scope || $rootScope;
 
         var addListener = function (eventName, callback) {
-          socket.on(eventName, asyncAngularify(socket, callback, 1000));
+          socket.on(eventName, asyncAngularifyReceive(socket, callback));
         };
 
         var addOnceListener = function (eventName, callback) {
-          socket.once(eventName, asyncAngularify(socket, callback, 1000));
+          socket.once(eventName, asyncAngularifyReceive(socket, callback));
         };
 
         var wrappedSocket = {
@@ -71,7 +79,7 @@ angular.module('btford.socket-io', []).
             var lastIndex = arguments.length - 1;
             var callback = arguments[lastIndex];
             if(typeof callback == 'function') {
-              callback = asyncAngularify(socket, callback);
+              callback = asyncAngularifySend(socket, callback);
               arguments[lastIndex] = callback;
             }
             return socket.emit.apply(socket, arguments);
@@ -107,7 +115,7 @@ angular.module('btford.socket-io', []).
             }
             events.forEach(function (eventName) {
               var prefixedEvent = prefix + eventName;
-              var forwardBroadcast = asyncAngularify(socket, function () {
+              var forwardBroadcast = asyncAngularifySend(socket, function () {
                 Array.prototype.unshift.call(arguments, prefixedEvent);
                 scope.$broadcast.apply(scope, arguments);
               });
