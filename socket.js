@@ -24,7 +24,11 @@ angular.module('btford.socket-io', []).
         aggregatedCallbacks.push(callback);
 
         // Schedule timeout?
-        if (aggregatedTimeout === null) {
+        if (aggregatedTimeout === null || aggregateDelay === 0) {
+          if (aggregatedTimeout !== null) {
+            $timeout.cancel(aggregatedTimeout);
+          }
+
           aggregatedTimeout = $timeout(function() {
             // Trigger all delayed callbacks
             var delayedCallback;
@@ -34,7 +38,7 @@ angular.module('btford.socket-io', []).
             }
 
             aggregatedTimeout = null;
-          }, (aggregateDelay || 10));
+          }, (aggregateDelay || 0));
         }
       };
 
@@ -43,7 +47,7 @@ angular.module('btford.socket-io', []).
           var args = arguments;
           aggregateCallback(function () {
             callback.apply(socket, args);
-          }, 1000);
+          }, (typeof args[0] === "object" ? 1000 : 0));
         } : angular.noop;
       };
 
